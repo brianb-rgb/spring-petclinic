@@ -24,6 +24,12 @@ jobs:
         with:
           oidc-provider-name: github-oidc
 
+      - name: Alias Server ID
+        run: |
+          SERVER_ID=$(jf config show --format json | jq -r '.[0].serverId')
+          jf config use "$SERVER_ID"
+          jf config export "$SERVER_ID" | jf config import --server-id artifactory
+
       - name: Collect Build Metadata
         run: |
           jf rt build-collect-env
@@ -39,8 +45,8 @@ jobs:
             --repo-deploy-releases  libs-release-local \
             --repo-deploy-snapshots libs-snapshot-local
 
-      - name: Build and Test
-        run: jf mvn clean test
+      - name: Build, Test and Deploy
+        run: jf mvn clean deploy
 
       - name: Docker Build and Push
         run: |
