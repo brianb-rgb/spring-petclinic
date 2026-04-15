@@ -26,9 +26,12 @@ jobs:
 
       - name: Alias Server ID
         run: |
-          SERVER_ID=$(jf config show --format json | jq -r '.[0].serverId')
-          jf config use "$SERVER_ID"
-          jf config export "$SERVER_ID" | jf config import --server-id artifactory
+          SERVER_ID=$(jf config show | grep "Server ID:" | awk '{print $NF}')
+          echo "Detected server ID: $SERVER_ID"
+          jf c add artifactory \
+            --url="${{ secrets.JF_URL }}" \
+            --oidc-provider-name=github-oidc \
+            --overwrite
 
       - name: Collect Build Metadata
         run: |
