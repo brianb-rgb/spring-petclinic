@@ -2,52 +2,47 @@ name: JFrog CI Pipeline
 on: [push]
 
 permissions:
-  id-token: write
+  id-token: write  # Required for OIDC
   contents: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      JF_URL: ${{ secrets.JF_URL }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      # 1. Setup JFrog CLI using OIDC (Best Practice)
       - name: Setup JFrog CLI
         uses: jfrog/setup-jfrog-cli@v4
+        env:
+          JF_URL: ${{ secrets.JF_URL }}
         with:
           oidc-provider-name: github-oidc
 
-      # This step creates the missing link: A Server ID mapped to your URL
-      - name: Create JFrog Config Profile
-        run: |
-          jf config add artifactory-server \
-            --url ${{ secrets.JF_URL }} \
-            --oidc-provider-name github-oidc \
-            --interactive=false
-
-      # Now we tell Maven to use that specific Server ID
+      # 2. Resolve Dependencies via Artifactory
       - name: Configure Maven
         run: |
-          jf mvnc --server-id-resolve artifactory-server \
+          jf mvnc --server-id-resolve artifactory \
                   --repo-resolve-releases maven-remote \
                   --repo-resolve-snapshots maven-remote
 
-      # Step 1 & 2: Compile & Run Tests
+      # 3. Compile & Run Tests
       - name: Build and Test
-        run: jf mvn clean test --server-id artifactory-server
+        run: jf mvn clean test --server-id-resolve artifactory
 
-      # Step 3 & 4: Package & Publish Docker Image
+      # 4. Package & Publish Docker Image
       - name: Docker Build and Push
         run: |
-          DOMAIN=$(echo "${{ secrets.JF_URL }}" | sed 's/https:\/\///' | sed 's/\///g')
+          # Clean URL for Docker registry
+          DOMAIN=$(echo "${{ secrets.JF_URL }}" | sed 's/https:\/\///')
           IMAGE_TAG=$DOMAIN/docker-local/spring-petclinic:${{ github.run_number }}
           
+          # Build the image
           docker build -t $IMAGE_TAG .
           
-          # Use the same Server ID for the push and build-info
-          jf docker push $IMAGE_TAG --server-id artifactory-server
-          jf rt build-collect-env --server-id artifactory-server
-          jf rt build-add-git --server-id artifactory-server
-          jf rt build-publish --server-id artifactory-server
+          # Push image & Publish Build Info (Traceability)
+          jf docker push $IMAGE_TAG
+          jf rt build-collect-env
+          jf rt build-add-git
+          jf rt build-publish
