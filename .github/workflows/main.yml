@@ -2,17 +2,21 @@ name: JFrog CI Pipeline
 on: [push]
 
 permissions:
-  id-token: write  # Required for OIDC
+  id-token: write
   contents: read
+
+env:
+  JFROG_CLI_BUILD_NAME: ${{ github.repository }}-build
+  JFROG_CLI_BUILD_NUMBER: ${{ github.run_number }}
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 1. Setup JFrog CLI using OIDC (Best Practice)
       - name: Setup JFrog CLI
         uses: jfrog/setup-jfrog-cli@v4
         env:
@@ -20,29 +24,30 @@ jobs:
         with:
           oidc-provider-name: github-oidc
 
-      # 2. Resolve Dependencies via Artifactory
-      - name: Configure Maven
+      - name: Collect Build Metadata
         run: |
-          jf mvnc --server-id-resolve artifactory \
-                  --repo-resolve-releases maven-remote \
-                  --repo-resolve-snapshots maven-remote
-
-      # 3. Compile & Run Tests
-      - name: Build and Test
-        run: jf mvn clean test --server-id artifactory
-
-      # 4. Package & Publish Docker Image
-      - name: Docker Build and Push
-        run: |
-          # Clean URL for Docker registry
-          DOMAIN=$(echo "${{ secrets.JF_URL }}" | sed 's/https:\/\///')
-          IMAGE_TAG=$DOMAIN/docker-local/spring-petclinic:${{ github.run_number }}
-          
-          # Build the image
-          docker build -t $IMAGE_TAG .
-          
-          # Push image & Publish Build Info (Traceability)
-          jf docker push $IMAGE_TAG
           jf rt build-collect-env
           jf rt build-add-git
-          jf rt build-publish
+
+      - name: Configure Maven
+        run: |
+          jf mvnc \
+            --server-id-resolve artifactory \
+            --repo-resolve-releases  libs-release \
+            --repo-resolve-snapshots libs-snapshot \
+            --server-id-deploy artifactory \
+            --repo-deploy-releases  libs-release-local \
+            --repo-deploy-snapshots libs-snapshot-local
+
+      - name: Build and Test
+        run: jf mvn clean test
+
+      - name: Docker Build and Push
+        run: |
+          DOMAIN=$(echo "${{ secrets.JF_URL }}" | sed 's|https\?://||' | sed 's|/$||')
+          IMAGE_TAG=$DOMAIN/docker-local/spring-petclinic:${{ github.run_number }}
+          docker build -t $IMAGE_TAG .
+          jf docker push $IMAGE_TAG --module=docker
+
+      - name: Publish Build Info
+        run: jf rt build-publish
