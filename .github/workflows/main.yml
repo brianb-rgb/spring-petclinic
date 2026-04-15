@@ -24,18 +24,6 @@ jobs:
         with:
           oidc-provider-name: github-oidc
 
-      - name: Debug JFrog Config
-        run: jf config show 2>&1 || true
-        
-      - name: Alias Server ID
-        run: |
-          SERVER_ID=$(jf config show | grep "Server ID:" | awk '{print $NF}')
-          echo "Detected server ID: $SERVER_ID"
-          jf c add artifactory \
-            --url="${{ secrets.JF_URL }}" \
-            --oidc-provider-name=github-oidc \
-            --overwrite
-
       - name: Collect Build Metadata
         run: |
           jf rt build-collect-env
@@ -44,12 +32,10 @@ jobs:
       - name: Configure Maven
         run: |
           jf mvnc \
-            --server-id-resolve artifactory \
             --repo-resolve-releases  libs-release \
             --repo-resolve-snapshots libs-snapshot \
-            --server-id-deploy artifactory \
-            --repo-deploy-releases  libs-release-local \
-            --repo-deploy-snapshots libs-snapshot-local
+            --repo-deploy-releases   libs-release-local \
+            --repo-deploy-snapshots  libs-snapshot-local
 
       - name: Build, Test and Deploy
         run: jf mvn clean deploy
