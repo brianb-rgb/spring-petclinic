@@ -22,19 +22,7 @@ jobs:
         env:
           JF_URL: ${{ secrets.JF_URL }}
         with:
-          oidc-provider-name: github-oidc
-
-      - name: Debug JFrog Auth
-        run: |
-          echo "=== jf config show ==="
-          jf config show 2>&1 || true
-          echo "=== jf c show (alternate) ==="
-          jf c show 2>&1 || true
-          echo "=== check for config file ==="
-          find $HOME -name "jfrog-cli.conf*" 2>/dev/null || true
-          find $HOME/.jfrog -type f 2>/dev/null || true
-          echo "=== relevant env (non-secret) ==="
-          env | grep -i jfrog | grep -v -i "token\|secret\|key\|password\|auth\|url" || true
+          oidc-provider-name: setup-jfrog-cli
 
       - name: Collect Build Metadata
         run: |
