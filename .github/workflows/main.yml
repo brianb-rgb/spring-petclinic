@@ -12,37 +12,42 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # Setup JFrog CLI
+      # 1. Setup JFrog CLI
       - name: Setup JFrog CLI
         uses: jfrog/setup-jfrog-cli@v4
         env:
           JF_URL: ${{ secrets.JF_URL }}
         with:
-          oidc-provider-name: github-oidc
+          oidc-provider-name: github-oidc # Ensure this matches your JFrog Integration name
 
-      # FIX: Configure Maven and force the server-id to match Artifactory
+      # 2. Explicitly bind the OIDC token to a Server ID
+      # This resolves the "Server ID URL is required" error
+      - name: Bind OIDC to Server Profile
+        run: |
+          jf config add default-server --url ${{ secrets.JF_URL }} --oidc-provider-name github-oidc --interactive=false
+
+      # 3. Configure Maven (Resolving from Artifactory)
       - name: Configure Maven
         run: |
-          jf mvnc --repo-resolve-releases maven-remote \
-                  --repo-resolve-snapshots maven-remote \
-                  --server-id-resolve default-server
+          jf mvnc --server-id-resolve default-server \
+                  --repo-resolve-releases maven-remote \
+                  --repo-resolve-snapshots maven-remote
 
-      # Step 1 & 2: Compile & Run Tests
-      # The '--server-id' flag here ensures the URL is passed correctly
+      # 4. Compile & Run Tests
       - name: Build and Test
         run: jf mvn clean test --server-id default-server
 
-      # Step 3 & 4: Package & Publish Docker Image
+      # 5. Build, Push & Publish Build Info
       - name: Docker Build and Push
         run: |
-          # Extract domain from URL (e.g., instance.jfrog.io)
+          # Extract domain (e.g., instance.jfrog.io)
           DOMAIN=$(echo "${{ secrets.JF_URL }}" | sed 's/https:\/\///')
           IMAGE_TAG=$DOMAIN/docker-local/spring-petclinic:${{ github.run_number }}
           
           docker build -t $IMAGE_TAG .
           
-          # Push and publish build metadata
-          jf docker push $IMAGE_TAG
-          jf rt build-collect-env
-          jf rt build-add-git
-          jf rt build-publish
+          # Push and attach Build Info for traceability
+          jf docker push $IMAGE_TAG --build-name "${{ github.workflow }}" --build-number "${{ github.run_number }}"
+          jf rt build-collect-env "${{ github.workflow }}" "${{ github.run_number }}"
+          jf rt build-add-git "${{ github.workflow }}" "${{ github.run_number }}"
+          jf rt build-publish "${{ github.workflow }}" "${{ github.run_number }}"
