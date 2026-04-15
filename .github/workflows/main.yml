@@ -29,7 +29,7 @@ jobs:
 
       # 3. Compile & Run Tests
       - name: Build and Test
-        run: jf mvn clean test --server-id-resolve artifactory
+        run: jf mvn clean test --server-id artifactory
 
       # 4. Package & Publish Docker Image
       - name: Docker Build and Push
