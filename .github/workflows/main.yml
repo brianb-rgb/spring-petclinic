@@ -2,7 +2,7 @@ name: JFrog CI Pipeline
 on: [push]
 
 permissions:
-  id-token: write  # Required for OIDC
+  id-token: write
   contents: read
 
 jobs:
@@ -12,7 +12,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 1. Setup JFrog CLI using OIDC (Best Practice)
+      # Setup JFrog CLI
       - name: Setup JFrog CLI
         uses: jfrog/setup-jfrog-cli@v4
         env:
@@ -20,28 +20,28 @@ jobs:
         with:
           oidc-provider-name: github-oidc
 
-      # 2. Resolve Dependencies via Artifactory
+      # FIX: Configure Maven and force the server-id to match Artifactory
       - name: Configure Maven
         run: |
-          jf mvnc --server-id-resolve artifactory \
-                  --repo-resolve-releases maven-remote \
-                  --repo-resolve-snapshots maven-remote
+          jf mvnc --repo-resolve-releases maven-remote \
+                  --repo-resolve-snapshots maven-remote \
+                  --server-id-resolve default-server
 
-      # 3. Compile & Run Tests
+      # Step 1 & 2: Compile & Run Tests
+      # The '--server-id' flag here ensures the URL is passed correctly
       - name: Build and Test
-        run: jf mvn clean test
+        run: jf mvn clean test --server-id default-server
 
-      # 4. Package & Publish Docker Image
+      # Step 3 & 4: Package & Publish Docker Image
       - name: Docker Build and Push
         run: |
-          # Clean URL for Docker registry
+          # Extract domain from URL (e.g., instance.jfrog.io)
           DOMAIN=$(echo "${{ secrets.JF_URL }}" | sed 's/https:\/\///')
           IMAGE_TAG=$DOMAIN/docker-local/spring-petclinic:${{ github.run_number }}
           
-          # Build the image
           docker build -t $IMAGE_TAG .
           
-          # Push image & Publish Build Info (Traceability)
+          # Push and publish build metadata
           jf docker push $IMAGE_TAG
           jf rt build-collect-env
           jf rt build-add-git
