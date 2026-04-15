@@ -24,6 +24,9 @@ jobs:
         with:
           oidc-provider-name: github-oidc
 
+      - name: Debug JFrog Config
+        run: jf config show 2>&1 || true
+        
       - name: Alias Server ID
         run: |
           SERVER_ID=$(jf config show | grep "Server ID:" | awk '{print $NF}')
