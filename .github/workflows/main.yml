@@ -28,6 +28,15 @@ jobs:
           jf rt build-collect-env
           jf rt build-add-git
 
+      - name: Debug JFrog Config
+        run: |
+          echo "=== config show ==="
+          jf config show 2>&1 || true
+          echo "=== .jfrog dir ==="
+          find $HOME/.jfrog -type f 2>/dev/null || true
+          echo "=== JF_ env vars ==="
+          env | grep "^JF_" || true
+
       - name: Configure Maven
         run: |
           jf mvnc \
