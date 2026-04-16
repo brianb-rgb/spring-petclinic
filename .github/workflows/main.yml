@@ -31,8 +31,8 @@ jobs:
       - name: Register JFrog Server
         run: |
           jf c add artifactory \
-            --url="${{ secrets.JFROG_PLATFORM_URL }}" \
-            --access-token="${{ secrets.JFROG_ACCESS_TOKEN }}" \
+            --url="${{ secrets.JF_URL }}" \
+            --access-token="${{ secrets.JF_ACCESS_TOKEN }}" \
             --interactive=false
           jf c use artifactory
           jf c show
