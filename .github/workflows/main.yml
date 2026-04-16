@@ -28,14 +28,14 @@ jobs:
           jf rt build-collect-env
           jf rt build-add-git
 
-      - name: Debug JFrog Config
+      - name: Register JFrog Server
         run: |
-          echo "=== config show ==="
-          jf config show 2>&1 || true
-          echo "=== .jfrog dir ==="
-          find $HOME/.jfrog -type f 2>/dev/null || true
-          echo "=== JF_ env vars ==="
-          env | grep "^JF_" || true
+          jf c add artifactory \
+            --url="${{ secrets.JFROG_PLATFORM_URL }}" \
+            --access-token="${{ secrets.JFROG_ACCESS_TOKEN }}" \
+            --interactive=false
+          jf c use artifactory
+          jf c show
 
       - name: Configure Maven
         run: |
