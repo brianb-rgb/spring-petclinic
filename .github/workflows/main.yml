@@ -40,8 +40,6 @@ jobs:
       - name: Configure Maven
         run: |
           jf mvnc \
-            --server-id-resolve=brianb \
-            --server-id-deploy=brianb \
             --repo-resolve-releases  spring-libs-release \
             --repo-resolve-snapshots spring-libs-snapshot \
             --repo-deploy-releases   spring-libs-release-local \
