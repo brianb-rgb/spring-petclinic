@@ -54,10 +54,10 @@ jobs:
         run: |
           # Clean URL for Docker registry
           DOMAIN=$(echo "${{ secrets.JF_URL }}" | sed 's/https:\/\///')
-          IMAGE_TAG=$DOMAIN/docker-local/spring-petclinic:${{ github.run_number }}
+          IMAGE_TAG=$DOMAIN/bb-docker-local/spring-petclinic:${{ github.run_number }}
           
-          # Build the image
-          docker build -t $IMAGE_TAG .
+          # Build the image using Spring Boot Buildpacks (no Dockerfile needed)
+          ./mvnw spring-boot:build-image -Dspring-boot.build-image.imageName=$IMAGE_TAG
           
           # Push image & Publish Build Info (Traceability)
           jf docker push $IMAGE_TAG
