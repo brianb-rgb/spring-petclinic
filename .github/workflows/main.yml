@@ -49,6 +49,8 @@ jobs:
       - name: Build, Test and Deploy
         run: jf mvn clean deploy
 
+      # 4. Package & Publish Docker Image
+      - name: Docker Build and Push
         run: |
           # Clean URL for Docker registry
           DOMAIN=$(echo "${{ secrets.JF_URL }}" | sed 's/https:\/\///')
