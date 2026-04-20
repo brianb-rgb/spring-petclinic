@@ -1,0 +1,10 @@
+version: 1
+type: maven
+resolver:
+    serverId: brianb
+    snapshotRepo: spring-libs-snapshot
+    releaseRepo: spring-libs-release
+deployer:
+    serverId: brianb
+    snapshotRepo: spring-libs-snapshot-local
+    releaseRepo: spring-libs-release-local

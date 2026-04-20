@@ -40,10 +40,12 @@ jobs:
       - name: Configure Maven
         run: |
           jf mvnc \
-            --repo-resolve-releases  libs-release \
-            --repo-resolve-snapshots libs-snapshot \
-            --repo-deploy-releases   libs-release-local \
-            --repo-deploy-snapshots  libs-snapshot-local
+            --server-id-resolve=brianb \
+            --server-id-deploy=brianb \
+            --repo-resolve-releases  spring-libs-release \
+            --repo-resolve-snapshots spring-libs-snapshot \
+            --repo-deploy-releases   spring-libs-release-local \
+            --repo-deploy-snapshots  spring-libs-snapshot-local
 
       - name: Build, Test and Deploy
         run: jf mvn clean deploy
