@@ -24,20 +24,6 @@ jobs:
           JF_URL: ${{ secrets.JF_URL }}
           JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
 
-      - name: Collect Build Metadata
-        run: |
-          jf rt build-collect-env
-          jf rt build-add-git
-
-      - name: Register JFrog Server
-        run: |
-          jf c add artifactory \
-            --url="${{ secrets.JF_URL }}" \
-            --access-token="${{ secrets.JF_ACCESS_TOKEN }}" \
-            --interactive=false
-          jf c use artifactory
-          jf c show
-
       - name: Configure Maven
         run: |
           jf mvnc \
@@ -47,20 +33,20 @@ jobs:
             --repo-deploy-snapshots  spring-libs-snapshot-local
 
       - name: Build, Test and Deploy
-        run: jf mvn clean deploy
+        run: jf mvn clean deploy -DskipTests=false
 
-      # 4. Package & Publish Docker Image
       - name: Docker Build and Push
         run: |
-          # Clean URL for Docker registry
           DOMAIN=$(echo "${{ secrets.JF_URL }}" | sed 's/https:\/\///')
           IMAGE_TAG=$DOMAIN/bb-docker-local/spring-petclinic:${{ github.run_number }}
           
-          # Build the image using Spring Boot Buildpacks (no Dockerfile needed)
-          ./mvnw spring-boot:build-image -Dspring-boot.build-image.imageName=$IMAGE_TAG
+          # Reuse the jar built by jf mvn, don't rebuild
+          ./mvnw spring-boot:build-image -Dspring-boot.build-image.imageName=$IMAGE_TAG -DskipTests -Dmaven.main.skip
           
-          # Push image & Publish Build Info (Traceability)
           jf docker push $IMAGE_TAG
+
+      - name: Publish Build Info
+        run: |
           jf rt build-collect-env
           jf rt build-add-git
           jf rt build-publish
