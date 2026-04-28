@@ -51,6 +51,13 @@ jobs:
           jf rt build-add-git
           jf rt build-publish
 
+      - name: Ensure Build is Indexed by Xray
+        run: |
+          jf xr curl -XPOST /api/v1/binMgr/builds \
+          -H "Content-Type: application/json" \
+          -d "{\"names\":[\"$JFROG_CLI_BUILD_NAME\"]}"
+
+
       - name: Xray Build Scan
         run: |
           # This triggers Xray to scan the build we just published.
