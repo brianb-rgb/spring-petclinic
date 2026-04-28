@@ -50,3 +50,9 @@ jobs:
           jf rt build-collect-env
           jf rt build-add-git
           jf rt build-publish
+
+      - name: Xray Build Scan
+        run: |
+          # This triggers Xray to scan the build we just published.
+          # It uses the env variables defined at the top of your workflow.
+          jf build-scan $JFROG_CLI_BUILD_NAME $JFROG_CLI_BUILD_NUMBER
