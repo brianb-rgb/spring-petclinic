@@ -4,6 +4,7 @@ on: [push]
 permissions:
   id-token: write
   contents: read
+  pull-requests: write
 
 env:
   JFROG_CLI_BUILD_NAME: ${{ github.repository }}-build
@@ -20,9 +21,9 @@ jobs:
 
       - name: Setup JFrog CLI
         uses: jfrog/setup-jfrog-cli@v4
-        env:
-          JF_URL: ${{ secrets.JF_URL }}
-          JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
+        with:
+          url: ${{ secrets.JF_URL }}
+          oidc-provider-name: github-oidc-provider
 
       - name: Configure Maven
         run: |
