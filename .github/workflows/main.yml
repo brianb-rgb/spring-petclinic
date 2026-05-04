@@ -24,6 +24,8 @@ jobs:
         with:
           url: ${{ secrets.JF_URL }}
           oidc-provider-name: github-oidc-provider
+        env:
+          JF_URL: ${{ secrets.JF_URL }}
 
       - name: Configure Maven
         run: |
