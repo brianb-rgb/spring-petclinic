@@ -21,11 +21,9 @@ jobs:
 
       - name: Setup JFrog CLI
         uses: jfrog/setup-jfrog-cli@v4
-        with:
-          url: ${{ secrets.JF_URL }}
-          oidc-provider-name: github-oidc-provider
         env:
           JF_URL: ${{ secrets.JF_URL }}
+          JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
 
       - name: Configure Maven
         run: |
