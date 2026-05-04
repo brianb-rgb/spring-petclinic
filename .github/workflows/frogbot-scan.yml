@@ -32,7 +32,8 @@ jobs:
           # GitHub token for PR comments
           JF_GIT_TOKEN: ${{ secrets.JF_GIT_TOKEN}}
 
-          JF_ROBOT_NAME: "frogbot"
+          JF_RELEASES_REPO: "Config"
+          
           # Optional: Specify package manager (npm, maven, gradle, pip, etc.)
           JF_PACKAGE_MANAGER: maven
 
