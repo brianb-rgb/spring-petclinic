@@ -14,7 +14,7 @@ permissions:
 jobs:
   scan-pull-request:
     runs-on: ubuntu-latest
-    environment: Config
+    environment: frogbot
 
     steps:
       - name: Checkout repository
